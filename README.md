@@ -102,8 +102,8 @@ The agent **writes memory back into the same database the retrieval reads from**
 
 ```bash
 # 1. Clone and enter the repo
-git clone https://github.com/suresharam/mongodb-temporal-sa-pra.git
-cd mongodb-temporal-sa-pra
+git clone https://github.com/mongodb-partners/mdb-temporal-pra.git
+cd mdb-temporal-pra
 
 # 2. Copy and fill in credentials
 cp .env.example .env
