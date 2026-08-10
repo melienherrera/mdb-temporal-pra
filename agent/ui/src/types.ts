@@ -11,6 +11,7 @@ export interface QueryResponse {
   query: string;
   answer: string | null;
   answer_available: boolean;
+  from_memory: boolean;
   active_collection: string;
   model: string;
   sources: Source[];

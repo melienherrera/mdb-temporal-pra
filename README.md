@@ -91,10 +91,10 @@ Database: temporal
 ├── knowledge            ← embedded docs + Atlas Vector Search index (active)
 ├── knowledge_v2         ← BackfillWorkflow writes here on model upgrade (blue/green)
 ├── temporal_config      ← active collection/index pointer (flipped by cutover)
-└── agent_memory         ← agent state, memory, citations (written by Deep Agent)
+└── agent_memory         ← agent query cache & citations; deduped by query hash, TTL-expired after 90 days
 ```
 
-The agent **writes memory back into the same database the retrieval reads from** — no copy, no lag.
+The agent **reads from and writes back to the same database** — repeated queries are served directly from `agent_memory` (no LLM call); new answers are cached with a 90-day TTL and deduplicated by query hash.
 
 ---
 
@@ -150,7 +150,7 @@ mongodb-temporal-sa-pra/
 ├── .env.example                    ← copy → .env, fill credentials
 ├── agent/
 │   ├── api.py                      ← FastAPI deep-agent backend (:8090)
-│   ├── retrieval.py                ← vector search + rerank + Claude answer
+│   ├── retrieval.py                ← memory recall → vector search → rerank → Claude answer → cache write
 │   └── ui/                         ← React/Vite chat UI (:5173)
 ├── pipeline/
 │   ├── worker.py                   ← Temporal worker process

@@ -7,6 +7,7 @@ unavailable, the endpoint still returns ranked source chunks.
 
 from __future__ import annotations
 
+import hashlib
 import logging
 from datetime import datetime, timezone
 from typing import Any
@@ -81,42 +82,77 @@ def _synthesize(query: str, docs: list[dict[str, Any]]) -> str | None:
         return None
 
 
-def _remember(query: str, answer: str | None, docs: list[dict[str, Any]]) -> None:
+def _query_hash(query: str) -> str:
+    """Stable key used to deduplicate memory entries for the same question."""
+    return hashlib.sha256(query.strip().lower().encode()).hexdigest()
+
+
+def _remember(query: str, answer: str | None, docs: list[dict[str, Any]], sources: list[dict[str, Any]]) -> None:
     try:
-        mongo_client()[settings.mongodb_db][settings.memory_collection].insert_one({
-            "query": query,
-            "answer": answer,
-            "sources": [d["chunk_id"] for d in docs],
-            "model": settings.answer_model,
-            "ts": datetime.now(timezone.utc),
-        })
+        mongo_client()[settings.mongodb_db][settings.memory_collection].update_one(
+            {"query_hash": _query_hash(query)},
+            {"$set": {
+                "query": query,
+                "answer": answer,
+                "chunk_ids": [d["chunk_id"] for d in docs],
+                "sources": sources,
+                "model": settings.answer_model,
+                "ts": datetime.now(timezone.utc),
+            }},
+            upsert=True,
+        )
     except Exception:
         pass  # memory write is best-effort
+
+
+def _recall(query: str) -> dict[str, Any] | None:
+    """Return the cached memory entry for this question, or None."""
+    try:
+        return mongo_client()[settings.mongodb_db][settings.memory_collection].find_one(
+            {"query_hash": _query_hash(query)}
+        )
+    except Exception:
+        return None
 
 
 def ask(query: str, k: int = 10, top_k: int = 5) -> dict[str, Any]:
     """Run the deep-agent retrieval + synthesis for one query."""
     active = get_active()
+
+    cached = _recall(query)
+    if cached and cached.get("answer"):
+        return {
+            "query": query,
+            "answer": cached["answer"],
+            "answer_available": True,
+            "from_memory": True,
+            "active_collection": active["active_collection"],
+            "model": cached.get("model", active["model"]),
+            "sources": cached.get("sources", []),
+        }
+
     hits = vector_search(query, k=k)
     ranked = _rerank(query, hits, top_k)
     answer = _synthesize(query, ranked)
-    _remember(query, answer, ranked)
+    sources = [
+        {
+            "n": i + 1,
+            "s3_uri": d["source_uri"],
+            "chunk_id": d["chunk_id"],
+            "score": round(float(d.get("rerank_score", d.get("score", 0.0))), 4),
+            "vector_score": round(float(d.get("score", 0.0)), 4),
+            "text": d["text"][:600],
+        }
+        for i, d in enumerate(ranked)
+    ]
+    _remember(query, answer, ranked, sources)
 
     return {
         "query": query,
         "answer": answer,
         "answer_available": answer is not None,
+        "from_memory": False,
         "active_collection": active["active_collection"],
         "model": active["model"],
-        "sources": [
-            {
-                "n": i + 1,
-                "s3_uri": d["source_uri"],
-                "chunk_id": d["chunk_id"],
-                "score": round(float(d.get("rerank_score", d.get("score", 0.0))), 4),
-                "vector_score": round(float(d.get("score", 0.0)), 4),
-                "text": d["text"][:600],
-            }
-            for i, d in enumerate(ranked)
-        ],
+        "sources": sources,
     }
