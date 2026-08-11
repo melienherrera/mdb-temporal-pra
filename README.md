@@ -26,9 +26,6 @@ In this architecture Temporal owns two critical concerns:
 
 ## The problem this solves
 
-Customers hand-roll resilient ingestion/embedding pipelines and it hurts
-(source: [MongoDB × Temporal proposal](https://docs.google.com/document/d/1pReiGwWCwFj28nWsZ6NiCA9nWrqhcaWgF51s_odUeCs/edit?tab=t.0#heading=h.54b4x1c9rtcf)):
-
 | Customer     | Pain hand-rolled without Temporal                                        |
 | ------------ | ------------------------------------------------------------------------ |
 | Regilient AI | MD5 change-tracking in production to decide what to re-embed             |
@@ -36,8 +33,7 @@ Customers hand-roll resilient ingestion/embedding pipelines and it hurts
 | Carrier      | A FastAPI pipeline, hand-tuning sequential vs. parallel                  |
 | Emerald X    | A 5-hour import that fails on the last step **reruns the entire import** |
 
-This PRA packages the pattern that removes that pain — already in production at DEA Technology,
-100ms, Chess.com, and C.R. England.
+This PRA packages the pattern that removes that pain.
 
 ---
 
@@ -100,6 +96,8 @@ The agent **reads from and writes back to the same database** — repeated queri
 
 ## Quickstart (local demo)
 
+**Prerequisites:** Please ensure you have these [Prerequisites](docs/RUNBOOK.md#prerequisites) installed
+
 ```bash
 # 1. Clone and enter the repo
 git clone https://github.com/mongodb-partners/mdb-temporal-pra.git
@@ -143,7 +141,7 @@ make stop
 ## Repo layout
 
 ```text
-mongodb-temporal-sa-pra/
+mdb-temporal-pra/
 ├── README.md
 ├── Makefile                        ← all dev commands (make help)
 ├── pyproject.toml                  ← Python deps managed by uv
