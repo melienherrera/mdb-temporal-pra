@@ -70,11 +70,10 @@ class Settings(BaseSettings):
     voyage_rerank_model: str = "rerank-2.5"
     embed_dim: int = 1024
 
-    # ---- Anthropic (deep agent) ----
-    anthropic_api_key: str = ""
-    anthropic_base_url: str = ""
-    anthropic_subscription_key: str = ""
-    answer_model: str = "claude-sonnet-4-5"
+    # ---- OpenAI (deep agent) ----
+    openai_api_key: str = ""
+    openai_base_url: str = ""
+    answer_model: str = "gpt-4o-mini"
 
     # ---- Service ports ----
     trigger_api_port: int = 8088

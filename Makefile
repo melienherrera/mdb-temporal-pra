@@ -45,7 +45,7 @@ install: ## Install Python deps with uv
 	uv sync
 
 .env: ## Create .env from the example if missing
-	@test -f .env || (cp .env.example .env && echo "created .env — fill in MONGODB_URI, VOYAGE_API_KEY, ANTHROPIC_API_KEY")
+	@test -f .env || (cp .env.example .env && echo "created .env — fill in MONGODB_URI, VOYAGE_API_KEY, OPENAI_API_KEY")
 
 .PHONY: check-env
 check-env: .env

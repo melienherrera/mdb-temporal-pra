@@ -542,7 +542,7 @@ React UI  ──POST /query──▶  FastAPI  ──▶  read temporal_config (
                                      ──▶  Voyage embed(query)
                                      ──▶  Atlas $vectorSearch (top-k chunks)
                                      ──▶  Voyage rerank(query, chunks)
-                                     ──▶  Anthropic Claude (RAG synthesis)
+                                     ──▶  OpenAI (RAG synthesis)
                                      ──▶  INSERT agent_memory
                                      ──▶  streaming SSE response to UI
 ```
@@ -567,7 +567,7 @@ pipeline = [
 ### Reranking
 
 The top-10 vector search results are passed to Voyage `rerank-2.5` with the original query.
-The reranked top-5 are used as context for Claude synthesis.
+The reranked top-5 are used as context for OpenAI synthesis.
 
 ---
 
@@ -588,7 +588,9 @@ All settings live in `.env` (loaded by `pipeline/config.py` via Pydantic Setting
 | `VOYAGE_MODEL`            | `voyage-3.5`            | Embedding model (1024-dim)                  |
 | `VOYAGE_RERANK_MODEL`     | `rerank-2.5`            | Reranking model                             |
 | `EMBED_DIM`               | `1024`                  | Embedding dimensionality (must match model) |
-| `ANSWER_MODEL`            | `claude-sonnet-4-5`     | Claude model for synthesis                  |
+| `OPENAI_API_KEY`          | —                       | OpenAI API key for answer synthesis         |
+| `OPENAI_BASE_URL`         | —                       | OpenAI-compatible API base URL              |
+| `ANSWER_MODEL`            | `gpt-4o-mini`           | OpenAI model for synthesis                  |
 | `CHUNK_SIZE`              | `1200`                  | Maximum characters per chunk                |
 | `CHUNK_OVERLAP`           | `150`                   | Overlap characters between adjacent chunks  |
 | `TEMPORAL_ADDRESS`        | `localhost:7233`        | Temporal server address                     |

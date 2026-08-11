@@ -66,7 +66,7 @@ This PRA packages the pattern that removes that pain.
 | Orchestration, retries, checkpointing, backfill, resumability | **Temporal**          |
 | Operational data, vector index, agent memory & state          | **MongoDB Atlas**     |
 | Embeddings & reranking                                        | **MongoDB Voyage AI** |
-| Answer synthesis                                              | **Anthropic Claude**  |
+| Answer synthesis                                              | **OpenAI**            |
 
 ---
 
@@ -105,7 +105,7 @@ cd mdb-temporal-pra
 
 # 2. Copy and fill in credentials
 cp .env.example .env
-# Edit .env: set MONGODB_URI, VOYAGE_API_KEY, ANTHROPIC_API_KEY
+# Edit .env: set MONGODB_URI, VOYAGE_API_KEY, OPENAI_API_KEY, OPENAI_BASE_URL
 
 # 3. Install all dependencies (Python + UI)
 make setup
@@ -148,7 +148,7 @@ mdb-temporal-pra/
 ├── .env.example                    ← copy → .env, fill credentials
 ├── agent/
 │   ├── api.py                      ← FastAPI deep-agent backend (:8090)
-│   ├── retrieval.py                ← memory recall → vector search → rerank → Claude answer → cache write
+│   ├── retrieval.py                ← memory recall → vector search → rerank → OpenAI answer → cache write
 │   └── ui/                         ← React/Vite chat UI (:5173)
 ├── pipeline/
 │   ├── worker.py                   ← Temporal worker process

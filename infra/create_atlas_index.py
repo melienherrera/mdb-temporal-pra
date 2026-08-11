@@ -68,7 +68,12 @@ def ensure_collections_and_indexes() -> dict[str, list[str]]:
             IndexModel([("doc_id", 1), ("ordinal", 1)], name="doc_ordinal"),
         ],
         settings.memory_collection: [
-            IndexModel([("query_hash", 1)], name="query_hash_unique", unique=True),
+            IndexModel(
+                [("query_hash", 1)],
+                name="query_hash_unique",
+                unique=True,
+                partialFilterExpression={"query_hash": {"$type": "string"}},
+            ),
             # TTL: auto-expire memory docs after 90 days to prevent unbounded growth
             IndexModel([("ts", 1)], name="ts_ttl", expireAfterSeconds=7_776_000),
         ],

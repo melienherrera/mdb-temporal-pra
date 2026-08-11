@@ -10,7 +10,7 @@ cloud setup.
 - [Prerequisites](#prerequisites)
 - [1. MongoDB Atlas setup](#1-mongodb-atlas-setup)
 - [2. Voyage AI API key](#2-voyage-ai-api-key)
-- [3. Anthropic API key](#3-anthropic-api-key)
+- [3. OpenAI API key](#3-openai-api-key)
 - [4. Environment configuration](#4-environment-configuration)
 - [5. Local setup (make setup)](#5-local-setup-make-setup)
 - [6. Local Docker infra — Kafka + MinIO](#6-local-docker-infra--kafka--minio)
@@ -97,15 +97,15 @@ required.
 
 ---
 
-## 3. Anthropic API key
+## 3. OpenAI API key
 
-Anthropic Claude is used by the deep agent to synthesize answers from retrieved chunks.
+OpenAI is used by the deep agent to synthesize answers from retrieved chunks.
 
-1. Sign up at [console.anthropic.com](https://console.anthropic.com/).
-2. Go to **API Keys** and create a new key.
-3. The default model is `claude-sonnet-4-5`. Retrieval still works without this key; only
+1. Sign up at [platform.openai.com](https://platform.openai.com/).
+2. Go to **API keys** and create a new key.
+3. The default model is `gpt-4o-mini`. Retrieval still works without this key; only
    answer synthesis requires it.
-4. Docs: [Anthropic API docs](https://docs.anthropic.com/en/api/getting-started)
+4. Docs: [OpenAI API docs](https://platform.openai.com/docs/api-reference)
 
 ---
 
@@ -121,7 +121,8 @@ Open `.env` and fill in the required values:
 # REQUIRED — fill these in
 MONGODB_URI=mongodb+srv://<user>:<pass>@<cluster>.mongodb.net/?retryWrites=true&w=majority
 VOYAGE_API_KEY=<your-voyage-api-key>
-ANTHROPIC_API_KEY=<your-anthropic-api-key>
+OPENAI_BASE_URL=https://api.openai.com/v1
+OPENAI_API_KEY=<your-openai-api-key>
 ```
 
 The remaining defaults work as-is for local development (Kafka on `localhost:29092`, MinIO on
@@ -430,9 +431,9 @@ Temporal Cloud connections.
 | Voyage AI embeddings on Atlas | [mongodb.com/docs/atlas/atlas-vector-search/ai-integrations/voyage-ai](https://www.mongodb.com/docs/atlas/atlas-vector-search/ai-integrations/voyage-ai/) |
 | Available embedding models    | [mongodb.com/docs/atlas/ai-integrations/voyage-ai/models](https://www.mongodb.com/docs/atlas/ai-integrations/)                                            |
 
-### Anthropic
+### OpenAI
 
-| Topic        | Documentation                                                                                                     |
-| ------------ | ----------------------------------------------------------------------------------------------------------------- |
-| Messages API | [docs.anthropic.com/en/api/messages](https://docs.anthropic.com/en/api/messages)                                  |
-| Models       | [docs.anthropic.com/en/docs/about-claude/models](https://docs.anthropic.com/en/docs/about-claude/models/overview) |
+| Topic            | Documentation                                                                                 |
+| ---------------- | --------------------------------------------------------------------------------------------- |
+| Chat Completions | [platform.openai.com/docs/api-reference/chat](https://platform.openai.com/docs/api-reference/chat) |
+| Models           | [platform.openai.com/docs/models](https://platform.openai.com/docs/models)                     |

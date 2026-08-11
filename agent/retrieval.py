@@ -1,7 +1,7 @@
-"""Deep-agent retrieval: vector search -> Voyage rerank -> Claude answer + memory write.
+"""Deep-agent retrieval: vector search -> Voyage rerank -> OpenAI answer + memory write.
 
 Reuses the pipeline's active-collection vector search (`pipeline.retrieval`). Reranking and
-answer synthesis degrade gracefully: if the Voyage rerank model or the Anthropic key is
+answer synthesis degrade gracefully: if the Voyage rerank model or the OpenAI key is
 unavailable, the endpoint still returns ranked source chunks.
 """
 
@@ -44,41 +44,45 @@ def _rerank(query: str, docs: list[dict[str, Any]], top_k: int) -> list[dict[str
 
 
 def _synthesize(query: str, docs: list[dict[str, Any]]) -> str | None:
-    if not settings.anthropic_api_key or settings.anthropic_api_key.startswith("<"):
+    if not settings.openai_api_key or settings.openai_api_key.startswith("<"):
         return None
-    import anthropic
+    from openai import AuthenticationError, NotFoundError, OpenAI
 
     context = "\n\n".join(
         f"[{i + 1}] (source: {d['source_uri']})\n{d['text']}" for i, d in enumerate(docs)
     )
-    client_kwargs: dict[str, Any] = {"api_key": settings.anthropic_api_key}
-    if settings.anthropic_base_url:
-        client_kwargs["base_url"] = settings.anthropic_base_url
-    subscription_key = settings.anthropic_subscription_key
-    if not subscription_key and settings.anthropic_base_url and "azure-api.net" in settings.anthropic_base_url:
-        subscription_key = settings.anthropic_api_key
-    if subscription_key:
-        client_kwargs["default_headers"] = {
-            "Ocp-Apim-Subscription-Key": subscription_key,
-            "api-key": subscription_key,
-        }
-        client_kwargs["default_query"] = {"subscription-key": subscription_key}
-    client = anthropic.Anthropic(**client_kwargs)
+    client_kwargs: dict[str, Any] = {"api_key": settings.openai_api_key}
+    if settings.openai_base_url:
+        client_kwargs["base_url"] = settings.openai_base_url
+        if "api.openai.com" not in settings.openai_base_url.lower():
+            client_kwargs["default_headers"] = {
+                "Ocp-Apim-Subscription-Key": settings.openai_api_key,
+                "api-key": settings.openai_api_key,
+            }
+            client_kwargs["default_query"] = {"subscription-key": settings.openai_api_key}
+    client = OpenAI(**client_kwargs)
     try:
-        resp = client.messages.create(
+        resp = client.chat.completions.create(
             model=settings.answer_model,
             max_tokens=1024,
-            system=_SYSTEM,
-            messages=[{"role": "user", "content": f"Question: {query}\n\nSources:\n{context}"}],
+            messages=[
+                {"role": "system", "content": _SYSTEM},
+                {"role": "user", "content": f"Question: {query}\n\nSources:\n{context}"},
+            ],
         )
-        return "".join(
-            block.text for block in resp.content if getattr(block, "type", None) == "text"
+        return resp.choices[0].message.content or None
+    except AuthenticationError as exc:
+        _LOG.warning("OpenAI authentication failed; returning sources only: %s", exc)
+        return None
+    except NotFoundError as exc:
+        _LOG.warning(
+            "OpenAI model '%s' was not found or is not accessible; returning sources only: %s",
+            settings.answer_model,
+            exc,
         )
-    except anthropic.AuthenticationError as exc:
-        _LOG.warning("Anthropic authentication failed; returning sources only: %s", exc)
         return None
     except Exception as exc:
-        _LOG.warning("Anthropic synthesis failed; returning sources only: %s", exc)
+        _LOG.warning("OpenAI synthesis failed; returning sources only: %s", exc)
         return None
 
 
