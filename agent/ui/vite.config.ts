@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      "/query": "http://localhost:8090",
+      "/research": "http://localhost:8090",
       "/health": "http://localhost:8090",
     },
   },

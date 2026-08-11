@@ -6,10 +6,16 @@ Run:  uv run python -m pipeline.worker
 from __future__ import annotations
 
 import asyncio
+import os
 from concurrent.futures import ThreadPoolExecutor
+from datetime import timedelta
 
 from temporalio.client import Client
+from temporalio.contrib.openai_agents import ModelActivityParameters, OpenAIAgentsPlugin
 from temporalio.worker import Worker
+
+from agent.agent_workflow import DeepResearchAgent
+from agent.tools import rerank_tool, vector_search_tool
 
 from .activities import ALL_ACTIVITIES
 from .config import settings
@@ -17,9 +23,29 @@ from .workflows import ALL_WORKFLOWS
 
 
 async def main() -> None:
+    plugins: list = []
+    agent_workflows: list = []
+    agent_activities: list = []
+    if settings.openai_api_key:
+        os.environ.setdefault("OPENAI_API_KEY", settings.openai_api_key)
+        if settings.openai_base_url:
+            os.environ.setdefault("OPENAI_BASE_URL", settings.openai_base_url)
+        plugins.append(
+            OpenAIAgentsPlugin(
+                model_params=ModelActivityParameters(
+                    start_to_close_timeout=timedelta(seconds=60)
+                )
+            )
+        )
+        agent_workflows = [DeepResearchAgent]
+        agent_activities = [vector_search_tool, rerank_tool]
+    else:
+        print("[worker] OPENAI_API_KEY not set - durable research agent disabled")
+
     client = await Client.connect(
         settings.temporal_address,
         namespace=settings.temporal_namespace,
+        plugins=plugins,
     )
 
     # Sync activities (pymongo / voyage / boto3) run in this thread pool; async
@@ -28,8 +54,8 @@ async def main() -> None:
         worker = Worker(
             client,
             task_queue=settings.temporal_task_queue,
-            workflows=ALL_WORKFLOWS,
-            activities=ALL_ACTIVITIES,
+            workflows=[*ALL_WORKFLOWS, *agent_workflows],
+            activities=[*ALL_ACTIVITIES, *agent_activities],
             activity_executor=executor,
         )
         print(

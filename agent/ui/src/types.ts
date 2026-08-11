@@ -1,18 +1,13 @@
-export interface Source {
-  n: number;
-  s3_uri: string;
-  chunk_id: string;
-  score: number;
-  vector_score: number;
-  text: string;
+export interface StartResponse {
+  workflow_id: string;
 }
 
-export interface QueryResponse {
-  query: string;
+export interface ProgressResponse {
+  workflow_id: string;
+  status?: string;
+  steps: string[];
+  tool_calls: string[];
   answer: string | null;
-  answer_available: boolean;
-  from_memory: boolean;
-  active_collection: string;
-  model: string;
-  sources: Source[];
+  model: string | null;
+  done: boolean;
 }

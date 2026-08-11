@@ -70,10 +70,11 @@ class Settings(BaseSettings):
     voyage_rerank_model: str = "rerank-2.5"
     embed_dim: int = 1024
 
-    # ---- OpenAI (deep agent) ----
+    # ---- OpenAI (durable research agent - OpenAI Agents SDK on Temporal) ----
     openai_api_key: str = ""
     openai_base_url: str = ""
-    answer_model: str = "gpt-4o-mini"
+    agent_model: str = "gpt-4.1"
+    agent_max_turns: int = 8
 
     # ---- Service ports ----
     trigger_api_port: int = 8088
